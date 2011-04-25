@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical">
+    
+    <TextView
+    	android:id="@+id/title"
+        android:layout_width="fill_parent"
+	    android:layout_marginLeft="5dp"
+	    android:layout_marginRight="5dp"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:textStyle="bold"
+        android:textColor="#ffffff"
+        android:gravity="center_vertical"/>
+    <TextView
+        android:id="@+id/time"
+        android:layout_width="fill_parent"
+	    android:layout_marginLeft="5dp"
+	    android:layout_marginRight="5dp"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:singleLine="true"
+        android:textColor="#ffffff"
+        android:ellipsize="marquee"/>
+    <TextView
+        android:id="@+id/description"
+        android:layout_width="fill_parent"
+	    android:layout_marginLeft="5dp"
+	    android:layout_marginRight="5dp"
+	    android:layout_marginBottom="5dp"
+        android:layout_height="0dp"
+        android:layout_weight="1" 
+        android:singleLine="true"
+        android:textColor="#ffffff"
+        android:ellipsize="marquee"/>
+
+    <LinearLayout
+    	android:layout_width="fill_parent"
+    	android:layout_height="wrap_content"
+	    android:layout_marginBottom="5dp"
+    	android:id="@+id/linearLayout2"
+    	android:orientation="horizontal">
+    
+	    <Button
+	    	android:id="@+id/buttonHide"
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content"
+    	    android:layout_weight="1"
+		    android:layout_marginLeft="5dp"
+		    android:text="@string/hide"/>
+    
+	    <Button
+	    	android:id="@+id/buttonCancelAddRule"
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content"
+	        android:layout_weight="1"
+		    android:layout_marginLeft="2dp"
+		    android:layout_marginRight="2dp"
+		    android:text="@string/cancel_add_rule"/>
+    
+	    <Button
+	    	android:id="@+id/buttonCancel"
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content"
+	        android:layout_weight="1"
+		    android:layout_marginRight="5dp"
+		    android:text="@string/cancel"/>
+    </LinearLayout>
+</LinearLayout>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Meeting Silence</string>
+    <string name="rules">Rules</string>
+    <string name="addrule">Add new rule</string>
+    <string name="no_rules_found">No rules found</string>
+    <string name="hide">Hide</string>
+    <string name="cancel">Cancel</string>
+    <string name="cancel_add_rule">Cancel and add rule</string>
+</resources>
