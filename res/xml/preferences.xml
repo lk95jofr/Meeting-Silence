@@ -1,45 +1,63 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-	<PreferenceCategory android:title="First Category">
+	<PreferenceCategory android:title="Scheduling">
 		<CheckBoxPreference
-        	android:title="Checkbox Preference"
+        	android:title="Time / day to schedule"
             android:defaultValue="false"
-            android:summary="This preference can be true or false"
-            android:key="checkboxPref" />
-                <!-- ListPreference
-                        android:title="List Preference"
-                        android:summary="This preference allows to select an item in a array"
-                        android:key="listPref"
-                        android:defaultValue="digiGreen"
-                        android:entries="@array/listArray"
-                        android:entryValues="@array/listValues" / -->
-	</PreferenceCategory>
-    <PreferenceCategory android:title="Second Category">
+            android:summary="Which time and day to schedule"
+            android:key="allDayPref" />
 		<EditTextPreference
-        	android:name="EditText Preference"
-            android:summary="This allows you to enter a string"
-            android:defaultValue="Nothing"
-            android:title="Edit This Text"
-            android:key="editTextPref" />
-		<RingtonePreference
-            android:name="Ringtone Preference"
-            android:summary="Select a ringtone"
-            android:title="Ringtones"
-            android:key="ringtonePref" />
-        <PreferenceScreen
-            android:key="SecondPrefScreen"
-            android:title="Second PreferenceScreen"
-            android:summary="This is a second PreferenceScreen">
-            <EditTextPreference
-        		android:name="An other EditText Preference"
-                android:summary="This is a preference in the second PreferenceScreen"
-                android:title="Edit text"
-                android:key="SecondEditTextPref" />
-        </PreferenceScreen>
-        
-        <Preference
-            android:title="Custom Preference"
-            android:summary="This works almost like a button"
-            android:key="customPref" />
+            android:title="Start"
+        	android:name="start"
+            android:summary="Set start time for scheduling"
+            android:dependency="allDayPref"
+            android:key="startPref"
+            android:defaultValue="8:00" />
+		<EditTextPreference
+            android:title="End"
+        	android:name="end"
+            android:summary="Set end time for scheduling"
+            android:dependency="allDayPref"
+            android:key="endPref"
+            android:defaultValue="18:00" />
+        <noip.toonsnet.app.ListPreferenceMultiSelect
+        	android:defaultValue="#ALL#"
+            android:dependency="allDayPref"
+            android:key="multiListPref"
+            android:title="Days to schedule"
+            android:dialogTitle="Days to schedule"
+            android:summary="Specify which days should be scheduled"
+            android:entries="@array/weekdays"
+            android:entryValues="@array/weekdays_values" />
+		<CheckBoxPreference
+        	android:title="All day events"
+            android:defaultValue="true"
+            android:summary="Ignore all day events"
+            android:key="ignoreAllDayEventPref" />
+		<CheckBoxPreference
+        	android:title="Multiple day events"
+            android:defaultValue="true"
+            android:summary="Ignore events span over several days"
+            android:key="ignoreSpanOverDaysEventsPref" />
+    </PreferenceCategory>
+    
+    <PreferenceCategory android:title="Sound and Vibrate">
+		<CheckBoxPreference
+        	android:title="Turn off sound"
+            android:defaultValue="true"
+            android:summary=""
+            android:key="soundPref" />
+		<CheckBoxPreference
+        	android:title="Turn off vibrate"
+            android:defaultValue="true"
+            android:summary=""
+            android:key="vibratePref" />
 	</PreferenceCategory>
+	
+    <!-- PreferenceCategory android:title="Rules">
+        <Preference
+            android:title="Edit rules"
+            android:summary="Add and change rules for scheduling"
+            android:key="rulesPref" />
+	</PreferenceCategory -->
 </PreferenceScreen>

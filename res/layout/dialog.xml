@@ -52,15 +52,6 @@
 		    android:text="@string/hide"/>
     
 	    <Button
-	    	android:id="@+id/buttonCancelAddRule"
-			android:layout_width="fill_parent"
-			android:layout_height="wrap_content"
-	        android:layout_weight="1"
-		    android:layout_marginLeft="2dp"
-		    android:layout_marginRight="2dp"
-		    android:text="@string/cancel_add_rule"/>
-    
-	    <Button
 	    	android:id="@+id/buttonCancel"
 			android:layout_width="fill_parent"
 			android:layout_height="wrap_content"

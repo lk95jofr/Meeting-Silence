@@ -11,9 +11,11 @@ import android.content.BroadcastReceiver;
 import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.media.AudioManager;
 import android.net.Uri;
+import android.preference.PreferenceManager;
 import android.text.format.DateUtils;
 import android.util.Log;
 import android.widget.Toast;
@@ -25,21 +27,12 @@ public class MeetingSilenceReceiver extends BroadcastReceiver {
     
 	private Calendar nextSchedule;
 	
-	private static int ringerMode = AudioManager.RINGER_MODE_NORMAL;
-	private static int vibrateTypeNotification = AudioManager.VIBRATE_SETTING_ON;
-	private static int vibrateTypeRinger = AudioManager.VIBRATE_SETTING_ON;
-	
 	private static final int NOTIFICATION_ID = 271172;
 	
-	private static boolean isInMeeting = false;
-	private static boolean isPhoneSilent = false;
-	private static boolean ignoreLongEvents = true;
-	private static boolean ignoreAllDayEvents = true;
-
 	@Override
 	public void onReceive(Context mContext, Intent intent) {
 		context = mContext;
-		
+
 		if (intent.getAction().equals("android.intent.action.BOOT_COMPLETED")) {
 			nextSchedule = Calendar.getInstance();
 			nextSchedule.add(Calendar.MINUTE, 2); // Wait 2 min for boot to complete
@@ -58,7 +51,8 @@ public class MeetingSilenceReceiver extends BroadcastReceiver {
 		
 	    PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, mIntent, 0);
 	    
-	    nextSchedule.set(Calendar.SECOND, 0); // Make sure we run on "the minute"
+	    nextSchedule.set(Calendar.SECOND, 0); // Make sure we run "on the minute"
+    	Log.d(TAG, "Next schedule: " + calendarToString(nextSchedule));
 
 		AlarmManager mAlarmManager = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
 		mAlarmManager.set(AlarmManager.RTC_WAKEUP, nextSchedule.getTimeInMillis(), pendingIntent);
@@ -67,7 +61,73 @@ public class MeetingSilenceReceiver extends BroadcastReceiver {
 	private void iterateThruCalendars() {
 		Log.d(TAG, "iterateCalendars called");
     	
-    	isInMeeting = false;
+    	boolean isInMeeting = false;
+    	boolean isPhoneSilent = getSharedPreference("isPhoneSilent", false);
+    	Log.d(TAG, "isPhoneSilent: " + isPhoneSilent);
+    	boolean ignoreSpanOverDaysEvents = getSharedPreference("ignoreSpanOverDaysEventsPref", true);
+    	boolean ignoreAllDayEvents = getSharedPreference("ignoreAllDayEventPref", true);
+    	
+    	boolean checkTimeAndDay = getSharedPreference("allDayPref", false);
+    	boolean hasSchedule = !checkTimeAndDay;
+    	
+    	if (checkTimeAndDay) {
+	    	String startPref = getSharedPreference("startPref", "8:00");
+	    	startPref = startPref.replace(".", ":");
+	    	String endPref = getSharedPreference("endPref", "18:00");
+	    	endPref = endPref.replace(".", ":");
+	    	
+	    	String[] startTime = startPref.split(":");
+	    	String[] endTime = endPref.split(":");
+	    	
+	    	Calendar cStartTime = Calendar.getInstance();
+	    	try {
+	    		cStartTime.set(Calendar.HOUR_OF_DAY, Integer.parseInt(startTime[0]));
+	    		cStartTime.set(Calendar.MINUTE, Integer.parseInt(startTime[1]));
+	    	} catch (NumberFormatException e) {
+	    		// If this fails we iterate
+	    		hasSchedule = true;
+	    	}
+	    	
+	    	Calendar cEndTime = Calendar.getInstance();
+	    	try {
+	    		cEndTime.set(Calendar.HOUR_OF_DAY, Integer.parseInt(endTime[0]));
+	    		cEndTime.set(Calendar.MINUTE, Integer.parseInt(endTime[1]));
+	    	} catch (NumberFormatException e) {
+	    		// If this fails we iterate
+	    		hasSchedule = true;
+	    	}
+	    	
+			Calendar now = Calendar.getInstance();
+	    	now.set(Calendar.SECOND, 0);
+	    	
+	    	Log.d(TAG, "START: " + calendarToString(cStartTime) + ", " + cStartTime.getTimeInMillis());
+	    	Log.d(TAG, "NOW: " + calendarToString(now) + ", " + now.getTimeInMillis());
+	    	Log.d(TAG, "END: " + calendarToString(cEndTime) + ", " + cEndTime.getTimeInMillis());
+	    	
+	    	if ((now.getTimeInMillis() >= cStartTime.getTimeInMillis()) && (now.getTimeInMillis() < cEndTime.getTimeInMillis())) {
+	    		Log.d(TAG, "We have the right time");
+		    	String value = getSharedPreference("multiListPref", "");
+		    	String[] vals = ListPreferenceMultiSelect.parseStoredValue(value);
+		    	if (vals != null) {
+		        	for (int i = 0; i < vals.length; i++) {
+		        		int val = Integer.parseInt(vals[i].trim());
+		        		if (now.get(Calendar.DAY_OF_WEEK) == val) {
+		    	    		Log.d(TAG, "We have the right day");
+		        			hasSchedule = true;
+		        			break;
+		        		}
+		        	}
+		    	}
+	    	}
+    	}
+		Log.d(TAG, "hasSchedule: " + hasSchedule);
+    	
+    	if (!isPhoneSilent && !hasSchedule) {
+    		nextSchedule = Calendar.getInstance();
+    		nextSchedule.add(Calendar.MINUTE, 5); // Next schedule is now + 5 min
+        	
+    		return;
+    	}
 
 		Uri calendarUri = Uri.parse("content://com.android.calendar/calendars");
 		Uri eventUri = Uri.parse("content://com.android.calendar/instances/when");
@@ -119,16 +179,7 @@ public class MeetingSilenceReceiver extends BroadcastReceiver {
 	    		    	Calendar end = Calendar.getInstance();
 	    		    	end.setTimeInMillis(eventCursor.getLong(eventCursor.getColumnIndex("end")));
 	    		    	
-	    		    	if (ignoreLongEvents) {
-	    		    		if (begin.get(Calendar.DAY_OF_MONTH) != end.get(Calendar.DAY_OF_MONTH)) {
-	    		    			continue;
-	    		    		}
-	    		    	}
-	    		    	
 	    		    	Boolean allDay = !eventCursor.getString(eventCursor.getColumnIndex("allDay")).equals("0");
-	    		    	if (ignoreAllDayEvents && allDay) {
-	    		    		continue;
-	    		    	}
 	    		    	
 	    		    	String description = eventCursor.getString(eventCursor.getColumnIndex("description"));
 	    		    	
@@ -137,14 +188,28 @@ public class MeetingSilenceReceiver extends BroadcastReceiver {
 	    		    		Log.d(TAG, "Description: " + description);
 	    		    	}
 
+	    		    	if (ignoreAllDayEvents && allDay) {
+	    		    		Log.d(TAG, "ignoreAllDayEvents");
+	    		    		continue;
+	    		    	}
+	    		    	
+	    		    	if (ignoreSpanOverDaysEvents) {
+	    		    		if (begin.get(Calendar.DAY_OF_MONTH) != end.get(Calendar.DAY_OF_MONTH)) {
+		    		    		Log.d(TAG, "ignoreLongEvents");
+	    		    			continue;
+	    		    		}
+	    		    	}
+	    		    	
 	    		    	if (hasSubject(title)) {
 	    		    		Log.d(TAG, "We have the right title");
-	    		    		if (hasMeeting(begin, end, allDay)) {
+	    		    		isInMeeting = hasMeeting(begin, end, allDay);
+	    		    		if (isInMeeting) {
 		    		    		Log.d(TAG, "We has a meeting");
 		    		    		
 	    		    			triggerNotification(title, calendarToString(begin), calendarToString(end), description);
 		    		    		if (!isPhoneSilent) {
 		    		    			turnOffSound();
+		    		    			isPhoneSilent = true;
 		    		    		}
 		    		    
 		    		    		nextSchedule = end;
@@ -176,8 +241,6 @@ public class MeetingSilenceReceiver extends BroadcastReceiver {
     			turnOnSound();
     		}
     	}
-    	
-    	Log.d(TAG, "Next schedule: " + calendarToString(nextSchedule));
     }
     
     private boolean hasMeeting(Calendar begin, Calendar end, boolean allDay) {
@@ -191,46 +254,51 @@ public class MeetingSilenceReceiver extends BroadcastReceiver {
     	Log.d(TAG, "END: " + calendarToString(end) + ", " + end.getTimeInMillis());
     	
     	if ((now.getTimeInMillis() >= begin.getTimeInMillis()) && (now.getTimeInMillis() < end.getTimeInMillis())) {
-    		isInMeeting = true;
+    		return true;
     	}
     	
-		Log.d(TAG, "isInMeeting: " + isInMeeting);
-    	return isInMeeting;
+    	return false;
     }
     
     private boolean hasSubject(String title) {
-    	boolean hasSubject = false;
-    	if (title.toLowerCase().contains("test")) {
-    		hasSubject = true;
-    	}
+    	boolean hasSubject = true;
+//    	if (title.toLowerCase().contains("test")) {
+//    		hasSubject = true;
+//    	}
     	
     	return hasSubject;
     }
     
     private void turnOffSound() {
 		Log.d(TAG, "turnOffSound called");
-    	isPhoneSilent = true;
+		setSharedPreference("isPhoneSilent", true);
     	
     	final AudioManager mAudioManager = (AudioManager)context.getSystemService(Context.AUDIO_SERVICE);
-    	ringerMode = mAudioManager.getRingerMode();
-    	vibrateTypeNotification = mAudioManager.getVibrateSetting(AudioManager.VIBRATE_TYPE_NOTIFICATION);
-    	vibrateTypeRinger = mAudioManager.getVibrateSetting(AudioManager.VIBRATE_TYPE_RINGER);
+    	setSharedPreference("ringerMode", mAudioManager.getRingerMode());
+    	setSharedPreference("vibrateTypeNotification", mAudioManager.getVibrateSetting(AudioManager.VIBRATE_TYPE_NOTIFICATION));
+    	setSharedPreference("vibrateTypeRinger", mAudioManager.getVibrateSetting(AudioManager.VIBRATE_TYPE_RINGER));
     	
-    	Log.d(TAG, "ringerMode: " + ringerMode);
-    	Log.d(TAG, "vibrateTypeNotification: " + vibrateTypeNotification);
-    	Log.d(TAG, "vibrateTypeRinger: " + vibrateTypeRinger);
+    	boolean soundPref = getSharedPreference("soundPref", true);
+    	boolean vibratePref = getSharedPreference("vibratePref", true);
     	
-    	mAudioManager.setRingerMode(AudioManager.RINGER_MODE_SILENT);
+		mAudioManager.setRingerMode(AudioManager.RINGER_MODE_SILENT);
+//    	if (soundPref && vibratePref) {
+//    		mAudioManager.setRingerMode(AudioManager.RINGER_MODE_SILENT);
+//    	} else if (soundPref) {
+//    		mAudioManager.setRingerMode(AudioManager.RINGER_MODE_VIBRATE);
+//    	} else if (vibratePref) {
+//    		mAudioManager.setRingerMode(AudioManager.RINGER_MODE_SILENT);
+//    	}
     }
     
     private void turnOnSound() {
 		Log.d(TAG, "turnOnSound called");
-    	isPhoneSilent = false;
+		setSharedPreference("isPhoneSilent", false);
     	
     	final AudioManager mAudioManager = (AudioManager)context.getSystemService(Context.AUDIO_SERVICE);
-    	mAudioManager.setRingerMode(ringerMode);
-    	mAudioManager.setVibrateSetting(AudioManager.VIBRATE_TYPE_NOTIFICATION, vibrateTypeNotification);
-    	mAudioManager.setVibrateSetting(AudioManager.VIBRATE_TYPE_RINGER, vibrateTypeRinger);
+    	mAudioManager.setRingerMode(getSharedPreference("ringerMode", AudioManager.RINGER_MODE_NORMAL));
+    	mAudioManager.setVibrateSetting(AudioManager.VIBRATE_TYPE_NOTIFICATION, getSharedPreference("vibrateTypeNotification", AudioManager.VIBRATE_SETTING_ON));
+    	mAudioManager.setVibrateSetting(AudioManager.VIBRATE_TYPE_RINGER, getSharedPreference("vibrateTypeRinger",  AudioManager.VIBRATE_SETTING_ON));
     }
     
     private void triggerNotification(String title, String begin, String end, String description) {
@@ -269,5 +337,41 @@ public class MeetingSilenceReceiver extends BroadcastReceiver {
 		sBuilder.append((minute < 10 ? ("0" + minute) : minute));
 		
 		return sBuilder.toString();
+    }
+    
+    private boolean getSharedPreference(String key, boolean defaultValue) {
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
+		return sp.getBoolean(key, defaultValue);
+    }
+    
+    private void setSharedPreference(String key, boolean value) {
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
+		SharedPreferences.Editor editor = sp.edit();
+		editor.putBoolean(key, value);
+		editor.commit();
+    }
+    
+    private int getSharedPreference(String key, int defaultValue) {
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
+		return sp.getInt(key, defaultValue);
+    }
+    
+    private void setSharedPreference(String key, int value) {
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
+		SharedPreferences.Editor editor = sp.edit();
+		editor.putInt(key, value);
+		editor.commit();
+    }
+    
+    private String getSharedPreference(String key, String defaultValue) {
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
+		return sp.getString(key, defaultValue);
+    }
+    
+    private void setSharedPreference(String key, String value) {
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
+		SharedPreferences.Editor editor = sp.edit();
+		editor.putString(key, value);
+		editor.commit();
     }
 }
