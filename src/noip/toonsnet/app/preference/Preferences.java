@@ -1,7 +1,6 @@
 package noip.toonsnet.app.preference;
  
 import noip.toonsnet.app.R;
-import noip.toonsnet.app.R.xml;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.Preference;

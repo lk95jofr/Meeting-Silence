@@ -20,7 +20,7 @@
             android:dependency="allDayPref"
             android:key="endPref"
             android:defaultValue="18:00" />
-        <noip.toonsnet.app.ListPreferenceMultiSelect
+        <noip.toonsnet.app.preference.ListPreferenceMultiSelect
         	android:defaultValue="#ALL#"
             android:dependency="allDayPref"
             android:key="multiListPref"

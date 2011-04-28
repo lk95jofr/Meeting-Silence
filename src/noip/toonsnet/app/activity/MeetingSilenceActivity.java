@@ -1,7 +1,6 @@
 package noip.toonsnet.app.activity;
 
 import noip.toonsnet.app.R;
-import noip.toonsnet.app.R.layout;
 import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
