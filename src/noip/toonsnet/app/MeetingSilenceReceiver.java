@@ -3,6 +3,8 @@ package noip.toonsnet.app;
 import java.util.Calendar;
 import java.util.Date;
 
+import noip.toonsnet.app.activity.MeetingSilenceDialogActivity;
+
 import android.app.AlarmManager;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -27,6 +29,7 @@ public class MeetingSilenceReceiver extends BroadcastReceiver {
     
 	private Calendar nextSchedule;
 	
+	private static boolean isPhoneSilent = false;
 	private static final int NOTIFICATION_ID = 271172;
 	
 	@Override
@@ -34,6 +37,9 @@ public class MeetingSilenceReceiver extends BroadcastReceiver {
 		context = mContext;
 
 		if (intent.getAction().equals("android.intent.action.BOOT_COMPLETED")) {
+	    	isPhoneSilent = getSharedPreference("isPhoneSilent", false);
+	    	Log.d(TAG, "isPhoneSilent: " + isPhoneSilent);
+	    	
 			nextSchedule = Calendar.getInstance();
 			nextSchedule.add(Calendar.MINUTE, 2); // Wait 2 min for boot to complete
 		} else if (intent.getAction().equals("noip.toonsnet.app.MeetingSilenceReceiver")) {
@@ -62,8 +68,6 @@ public class MeetingSilenceReceiver extends BroadcastReceiver {
 		Log.d(TAG, "iterateCalendars called");
     	
     	boolean isInMeeting = false;
-    	boolean isPhoneSilent = getSharedPreference("isPhoneSilent", false);
-    	Log.d(TAG, "isPhoneSilent: " + isPhoneSilent);
     	boolean ignoreSpanOverDaysEvents = getSharedPreference("ignoreSpanOverDaysEventsPref", true);
     	boolean ignoreAllDayEvents = getSharedPreference("ignoreAllDayEventPref", true);
     	
@@ -120,6 +124,8 @@ public class MeetingSilenceReceiver extends BroadcastReceiver {
 		    	}
 	    	}
     	}
+    	
+		Log.d(TAG, "isPhoneSilent: " + isPhoneSilent);
 		Log.d(TAG, "hasSchedule: " + hasSchedule);
     	
     	if (!isPhoneSilent && !hasSchedule) {
@@ -209,7 +215,6 @@ public class MeetingSilenceReceiver extends BroadcastReceiver {
 	    		    			triggerNotification(title, calendarToString(begin), calendarToString(end), description);
 		    		    		if (!isPhoneSilent) {
 		    		    			turnOffSound();
-		    		    			isPhoneSilent = true;
 		    		    		}
 		    		    
 		    		    		nextSchedule = end;
@@ -241,6 +246,8 @@ public class MeetingSilenceReceiver extends BroadcastReceiver {
     			turnOnSound();
     		}
     	}
+    	
+    	setSharedPreference("isPhoneSilent", isPhoneSilent);
     }
     
     private boolean hasMeeting(Calendar begin, Calendar end, boolean allDay) {
@@ -271,7 +278,7 @@ public class MeetingSilenceReceiver extends BroadcastReceiver {
     
     private void turnOffSound() {
 		Log.d(TAG, "turnOffSound called");
-		setSharedPreference("isPhoneSilent", true);
+		isPhoneSilent = true;
     	
     	final AudioManager mAudioManager = (AudioManager)context.getSystemService(Context.AUDIO_SERVICE);
     	setSharedPreference("ringerMode", mAudioManager.getRingerMode());
@@ -293,7 +300,7 @@ public class MeetingSilenceReceiver extends BroadcastReceiver {
     
     private void turnOnSound() {
 		Log.d(TAG, "turnOnSound called");
-		setSharedPreference("isPhoneSilent", false);
+		isPhoneSilent = false;
     	
     	final AudioManager mAudioManager = (AudioManager)context.getSystemService(Context.AUDIO_SERVICE);
     	mAudioManager.setRingerMode(getSharedPreference("ringerMode", AudioManager.RINGER_MODE_NORMAL));
