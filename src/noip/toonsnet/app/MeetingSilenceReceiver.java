@@ -204,7 +204,7 @@ public class MeetingSilenceReceiver extends BroadcastReceiver {
 	    		    		Log.d(TAG, "We have the right title");
 	    		    		isInMeeting = hasMeeting(begin, end, allDay);
 	    		    		if (isInMeeting) {
-		    		    		Log.d(TAG, "We has a meeting");
+		    		    		Log.d(TAG, "We have a meeting");
 		    		    		
 	    		    			triggerNotification(title, calendarToString(begin), calendarToString(end), description);
 		    		    		if (!isPhoneSilent) {
