@@ -14,6 +14,18 @@ public class MeetingSilenceActivity extends Activity {
 		Log.d(TAG, "onCreate called");
 		
         setContentView(R.layout.main);
+        
+//		Intent mIntent = new Intent(getBaseContext(), MeetingSilenceReceiver.class);
+//		mIntent.setAction("noip.toonsnet.app.MeetingSilenceReceiver");
+//		
+//	    PendingIntent pendingIntent = PendingIntent.getBroadcast(getBaseContext(), 0, mIntent, 0);
+//	    
+//		Calendar nextSchedule = Calendar.getInstance();
+//		nextSchedule.add(Calendar.MINUTE, 2); // Wait 2 min for first cycle
+//	    nextSchedule.set(Calendar.SECOND, 0); // Make sure we run "on the minute"
+//
+//		AlarmManager mAlarmManager = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
+//		mAlarmManager.set(AlarmManager.RTC_WAKEUP, nextSchedule.getTimeInMillis(), pendingIntent);
 	}
 	
 	@Override
@@ -32,8 +44,6 @@ public class MeetingSilenceActivity extends Activity {
     protected void onResume() {
         super.onResume();
 		Log.d(TAG, "onResume called");
-		
-		// start service if stopped
     }
     
 	@Override
@@ -53,48 +63,4 @@ public class MeetingSilenceActivity extends Activity {
         super.onDestroy();
 		Log.d(TAG, "onDestroy called");
     }
-    
-//    private class ServiceCenterAdapter extends ArrayAdapter<ServiceCenter> {
-//    	private ArrayList<ServiceCenter> items;
-//
-//        public ServiceCenterAdapter(Context context, int textViewResourceId, ArrayList<ServiceCenter> items) {
-//        	super(context, textViewResourceId, items);
-//        	this.items = items;
-//        }
-//        
-//        @Override
-//        public View getView(int position, View convertView, ViewGroup parent) {
-//        	View v = convertView;
-//        	if (v == null) {
-//        		LayoutInflater li = (LayoutInflater)getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-//        		v = li.inflate(R.layout.servicecenterlist, null);
-//        	}
-//        	
-//        	ServiceCenter o = items.get(position);
-//        	if (o != null) {
-//        		TextView name = (TextView) v.findViewById(R.id.dname);
-//        		TextView phone = (TextView) v.findViewById(R.id.dphn);
-//        		TextView addr = (TextView) v.findViewById(R.id.daddr_dcity);
-//        		TextView url = (TextView) v.findViewById(R.id.durl);
-//        		
-//        		if (name != null) {
-//        			name.setText(o.getDName());
-//        		}
-//        		
-//        		if ((phone != null) && (!"".equals(o.getDPhn()))) {
-//        			phone.setText(o.getDPhn());
-//        		}
-//        		
-//        		if ((addr != null) && (!"".equals(o.getDAddr())) || (!"".equals(o.getDCity()))) {
-//        			addr.setText(o.getDAddr() + ", " + o.getDCity());
-//        		}
-//        		
-//        		if ((url != null) && (!"".equals(o.getDUrl()))) {
-//        			url.setText(o.getDUrl());
-//        		}
-//        	}
-//        	
-//        	return v;
-//        }
-//    }
 }

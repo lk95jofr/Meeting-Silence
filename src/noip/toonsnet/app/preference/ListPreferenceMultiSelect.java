@@ -67,21 +67,22 @@ public class ListPreferenceMultiSelect extends ListPreference {
     private void restoreCheckedEntries() {
     	CharSequence[] entryValues = getEntryValues();
     	
-//    	SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
-//    	String value = prefs.getString("multiListPref", "");
-//    	String[] vals = parseStoredValue(value);
     	String[] vals = parseStoredValue(getValue());
-    	if ( vals != null ) {
-        	for ( int j=0; j<vals.length; j++ ) {
+    	if (vals != null) {
+        	for (int j = 0; j < vals.length; j++) {
         		String val = vals[j].trim();
-            	for ( int i=0; i<entryValues.length; i++ ) {
+            	for (int i=0; i<entryValues.length; i++) {
             		CharSequence entry = entryValues[i];
-                	if ( entry.equals(val) ) {
+                	if (entry.equals(val)) {
             			mClickedDialogEntryIndices[i] = true;
             			break;
             		}
             	}
         	}
+//    	} else {
+//        	for (int i=0; i<entryValues.length; i++) {
+//        		mClickedDialogEntryIndices[i] = true;
+//        	}
     	}
     }
 
@@ -104,10 +105,6 @@ public class ListPreferenceMultiSelect extends ListPreference {
             		val = val.substring(0, val.length()-SEPARATOR.length());
             	}
             	
-//            	SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
-//        		SharedPreferences.Editor editor = prefs.edit();
-//        		editor.putString("multiListPref", val);
-//        		editor.commit();
             	setValue(val);
             }
         }

@@ -180,9 +180,12 @@ public class MeetingSilenceReceiver extends BroadcastReceiver {
 	    		    	Boolean allDay = !eventCursor.getString(eventCursor.getColumnIndex("allDay")).equals("0");
 	    		    	
 	    		    	String description = eventCursor.getString(eventCursor.getColumnIndex("description"));
+	    		    	if (description == null) {
+	    		    		description = "";
+	    		    	}
 	    		    	
 	    		    	Log.d(TAG, "Title: " + title + " Begin: " + calendarToString(begin) + " End: " + calendarToString(end) + " All Day: " + allDay);
-	    		    	if ((description != null) && (!"".equals(description))) {
+	    		    	if (!"".equals(description)) {
 	    		    		Log.d(TAG, "Description: " + description);
 	    		    	}
 
