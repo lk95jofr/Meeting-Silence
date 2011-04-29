@@ -30,16 +30,17 @@ public class MeetingSilenceReceiver extends BroadcastReceiver {
     
 	private Calendar nextSchedule;
 	
-	private static boolean isPhoneSilent = false;
+	private boolean isPhoneSilent = false;
 	private static final int NOTIFICATION_ID = 271172;
 	
 	@Override
 	public void onReceive(Context mContext, Intent intent) {
 		context = mContext;
 
+		isPhoneSilent = getSharedPreference("isPhoneSilent", false);
+    	Log.d(TAG, "isPhoneSilent: " + isPhoneSilent);
+		
 		if (intent.getAction().equals("android.intent.action.BOOT_COMPLETED")) {
-	    	isPhoneSilent = getSharedPreference("isPhoneSilent", false);
-	    	Log.d(TAG, "isPhoneSilent: " + isPhoneSilent);
 	    	
 			nextSchedule = Calendar.getInstance();
 			nextSchedule.add(Calendar.MINUTE, 2); // Wait 2 min for boot to complete
@@ -71,11 +72,9 @@ public class MeetingSilenceReceiver extends BroadcastReceiver {
     	boolean isInMeeting = false;
     	boolean ignoreSpanOverDaysEvents = getSharedPreference("ignoreSpanOverDaysEventsPref", true);
     	boolean ignoreAllDayEvents = getSharedPreference("ignoreAllDayEventPref", true);
+    	boolean hasTimeAndDay = !getSharedPreference("allDayPref", false);
     	
-    	boolean checkTimeAndDay = getSharedPreference("allDayPref", false);
-    	boolean hasSchedule = !checkTimeAndDay;
-    	
-    	if (checkTimeAndDay) {
+    	if (!hasTimeAndDay) {
 	    	String startPref = getSharedPreference("startPref", "8:00");
 	    	startPref = startPref.replace(".", ":");
 	    	String endPref = getSharedPreference("endPref", "18:00");
@@ -90,7 +89,7 @@ public class MeetingSilenceReceiver extends BroadcastReceiver {
 	    		cStartTime.set(Calendar.MINUTE, Integer.parseInt(startTime[1]));
 	    	} catch (NumberFormatException e) {
 	    		// If this fails we iterate
-	    		hasSchedule = true;
+	    		hasTimeAndDay = true;
 	    	}
 	    	
 	    	Calendar cEndTime = Calendar.getInstance();
@@ -99,7 +98,7 @@ public class MeetingSilenceReceiver extends BroadcastReceiver {
 	    		cEndTime.set(Calendar.MINUTE, Integer.parseInt(endTime[1]));
 	    	} catch (NumberFormatException e) {
 	    		// If this fails we iterate
-	    		hasSchedule = true;
+	    		hasTimeAndDay = true;
 	    	}
 	    	
 			Calendar now = Calendar.getInstance();
@@ -118,7 +117,7 @@ public class MeetingSilenceReceiver extends BroadcastReceiver {
 		        		int val = Integer.parseInt(vals[i].trim());
 		        		if (now.get(Calendar.DAY_OF_WEEK) == val) {
 		    	    		Log.d(TAG, "We have the right day");
-		        			hasSchedule = true;
+		        			hasTimeAndDay = true;
 		        			break;
 		        		}
 		        	}
@@ -126,16 +125,8 @@ public class MeetingSilenceReceiver extends BroadcastReceiver {
 	    	}
     	}
     	
-		Log.d(TAG, "isPhoneSilent: " + isPhoneSilent);
-		Log.d(TAG, "hasSchedule: " + hasSchedule);
+		Log.d(TAG, "hasTimeAndDay: " + hasTimeAndDay);
     	
-    	if (!isPhoneSilent && !hasSchedule) {
-    		nextSchedule = Calendar.getInstance();
-    		nextSchedule.add(Calendar.MINUTE, 5); // Next schedule is now + 5 min
-        	
-    		return;
-    	}
-
 		Uri calendarUri = Uri.parse("content://com.android.calendar/calendars");
 		Uri eventUri = Uri.parse("content://com.android.calendar/instances/when");
 		
@@ -147,6 +138,11 @@ public class MeetingSilenceReceiver extends BroadcastReceiver {
     	Log.d(TAG, "calendarUri: " + calendarUri.toString());
     	Log.d(TAG, "eventUri: " + eventUri.toString());
 	     
+		nextSchedule = Calendar.getInstance();
+		nextSchedule.add(Calendar.MINUTE, 5); // Next schedule is now + 5 min
+		
+		Log.d(TAG, "Possible schedule: " + calendarToString(nextSchedule));
+		
     	String[] projectionCalendar = new String[] { "_id", "name" };
     	Cursor calendarCursor = context.getContentResolver().query(calendarUri, projectionCalendar, "selected=1", null, null);
     	if (calendarCursor.moveToFirst()) {
@@ -154,11 +150,6 @@ public class MeetingSilenceReceiver extends BroadcastReceiver {
     		String calId = "";
     		int nameColumn = calendarCursor.getColumnIndex("name");
     		int idColumn = calendarCursor.getColumnIndex("_id");
-    		
-    		nextSchedule = Calendar.getInstance();
-    		nextSchedule.add(Calendar.MINUTE, 5); // Next schedule is now + 5 min
-    		
-    		Log.d(TAG, "Possible schedule: " + calendarToString(nextSchedule));
     		
     		do {
     			calName = calendarCursor.getString(nameColumn);
@@ -207,24 +198,26 @@ public class MeetingSilenceReceiver extends BroadcastReceiver {
 	    		    		}
 	    		    	}
 	    		    	
-	    		    	if (hasSubject(title)) {
-	    		    		Log.d(TAG, "We have the right title");
-	    		    		isInMeeting = hasMeeting(begin, end, allDay);
-	    		    		if (isInMeeting) {
-		    		    		Log.d(TAG, "We have a meeting");
-		    		    		
-	    		    			triggerNotification(title, calendarToString(begin), calendarToString(end), description);
-		    		    		if (!isPhoneSilent) {
-		    		    			turnOffSound();
-		    		    		}
-		    		    
-		    		    		nextSchedule = end;
-		    		    		Log.d(TAG, "End schedule: " + calendarToString(nextSchedule));
-		    		    	} else {
-		    		    		if (begin.before(nextSchedule)) {
-		    		    			nextSchedule = begin;
-			    		    		Log.d(TAG, "Begin schedule: " + calendarToString(nextSchedule));
-		    		    		}
+	    		    	if (hasTimeAndDay) {
+		    		    	if (hasSubject(title)) {
+		    		    		Log.d(TAG, "We have the right title");
+		    		    		isInMeeting = hasMeeting(begin, end, allDay);
+		    		    		if (isInMeeting) {
+			    		    		Log.d(TAG, "We have a meeting");
+			    		    		
+		    		    			triggerNotification(title, calendarToString(begin), calendarToString(end), description);
+			    		    		if (!isPhoneSilent) {
+			    		    			turnOffSound();
+			    		    		}
+			    		    
+			    		    		nextSchedule = end;
+			    		    		Log.d(TAG, "End schedule: " + calendarToString(nextSchedule));
+			    		    	} else {
+			    		    		if (begin.before(nextSchedule)) {
+			    		    			nextSchedule = begin;
+				    		    		Log.d(TAG, "Begin schedule: " + calendarToString(nextSchedule));
+			    		    		}
+			    		    	}
 		    		    	}
 	    		    	}
     	        	} while (eventCursor.moveToNext() && !isInMeeting);
@@ -240,7 +233,6 @@ public class MeetingSilenceReceiver extends BroadcastReceiver {
     		calendarCursor.close();
     	}
 
-    	
     	if (!isInMeeting) {
     		if (isPhoneSilent) {
     			cancelNotification();
