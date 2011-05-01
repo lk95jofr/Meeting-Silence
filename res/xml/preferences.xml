@@ -30,7 +30,7 @@
             android:entries="@array/weekdays"
             android:entryValues="@array/weekdays_values" />
 		<CheckBoxPreference
-        	android:title="All day events"
+        	android:title="Ignore all day events"
             android:defaultValue="true"
             android:summary="Ignore all day events"
             android:key="ignoreAllDayEventPref" />
@@ -40,6 +40,19 @@
             android:summary="Ignore events span over several days"
             android:key="ignoreSpanOverDaysEventsPref" />
     </PreferenceCategory>
+	
+    <PreferenceCategory android:title="Rules">
+		<EditTextPreference
+            android:title="Keywords"
+        	android:name="rule"
+            android:summary="Split keywords with semicolon (;)"
+            android:key="rulePref"
+            android:defaultValue="" />
+        <!-- Preference
+            android:title="Edit rules"
+            android:summary="Add and change rules for scheduling"
+            android:key="rulesPref" / -->
+	</PreferenceCategory>
     
     <PreferenceCategory android:title="Sound and Vibrate">
 		<CheckBoxPreference
@@ -54,9 +67,9 @@
             android:key="vibratePref" />
 	</PreferenceCategory>
 	
-    <!-- PreferenceCategory android:title="Rules">
+    <!-- PreferenceCategory android:title="Calendar">
         <Preference
-            android:title="Edit rules"
+            android:title="Choose calendar"
             android:summary="Add and change rules for scheduling"
             android:key="rulesPref" />
 	</PreferenceCategory -->

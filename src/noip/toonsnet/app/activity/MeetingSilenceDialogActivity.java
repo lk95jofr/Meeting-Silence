@@ -1,8 +1,6 @@
 package noip.toonsnet.app.activity;
 
 import noip.toonsnet.app.R;
-import noip.toonsnet.app.R.id;
-import noip.toonsnet.app.R.layout;
 import android.app.Activity;
 import android.app.NotificationManager;
 import android.content.Context;
@@ -35,6 +33,21 @@ public class MeetingSilenceDialogActivity extends Activity implements OnClickLis
 		hideButton.setOnClickListener(this);
 		cancelButton = (Button)findViewById(R.id.buttonCancel);
 		cancelButton.setOnClickListener(this);
+		
+		Bundle extras = getIntent().getExtras();
+		String sTitle = extras.getString("title");
+		String sTime = extras.getString("time");
+		String sDescription = extras.getString("description");
+		
+		Log.d(TAG, "title: " + sTitle);
+		Log.d(TAG, "time: " + sTime);
+		Log.d(TAG, "desc: " + sDescription);
+		
+		this.setTitle(sTitle);
+		TextView time = (TextView)findViewById(R.id.time);
+		time.setText(sTime);
+		TextView description = (TextView)findViewById(R.id.description);
+		description.setText(sDescription);
 	}
 	
 	@Override
@@ -47,18 +60,6 @@ public class MeetingSilenceDialogActivity extends Activity implements OnClickLis
 	public void onStart() {
 		super.onStart();
 		Log.d(TAG, "onStart called");
-		
-		Bundle extras = getIntent().getExtras();
-		String sTitle = extras.getString("title");
-		String sTime = extras.getString("time");
-		String sDescription = extras.getString("description");
-		
-		TextView title = (TextView)findViewById(R.id.title);
-		title.setText(sTitle);
-		TextView time = (TextView)findViewById(R.id.time);
-		time.setText(sTime);
-		TextView description = (TextView)findViewById(R.id.description);
-		description.setText(sDescription);
 	}
 
     @Override

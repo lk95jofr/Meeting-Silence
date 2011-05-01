@@ -45,7 +45,7 @@ public class MeetingSilenceReceiver extends BroadcastReceiver {
 			nextSchedule = Calendar.getInstance();
 			nextSchedule.add(Calendar.MINUTE, 2); // Wait 2 min for boot to complete
 		} else if (intent.getAction().equals("noip.toonsnet.app.MeetingSilenceReceiver")) {
-			iterateThruCalendars();
+			iterateCalendars();
 		}
 		
 		// To remove, only debug
@@ -66,7 +66,7 @@ public class MeetingSilenceReceiver extends BroadcastReceiver {
 		mAlarmManager.set(AlarmManager.RTC_WAKEUP, nextSchedule.getTimeInMillis(), pendingIntent);
 	}
 	
-	private void iterateThruCalendars() {
+	private void iterateCalendars() {
 		Log.d(TAG, "iterateCalendars called");
     	
     	boolean isInMeeting = false;
@@ -170,6 +170,9 @@ public class MeetingSilenceReceiver extends BroadcastReceiver {
     	        if (eventCursor.moveToFirst()) {
     	        	do {
 	    		    	String title = eventCursor.getString(eventCursor.getColumnIndex("title"));
+	    		    	if (title == null) {
+	    		    		title = "";
+	    		    	}
 	    		    	
 	    		    	Calendar begin = Calendar.getInstance();
 	    		    	begin.setTimeInMillis(eventCursor.getLong(eventCursor.getColumnIndex("begin")));
@@ -263,11 +266,29 @@ public class MeetingSilenceReceiver extends BroadcastReceiver {
     	return false;
     }
     
-    private boolean hasSubject(String title) {
-    	boolean hasSubject = true;
-//    	if (title.toLowerCase().contains("test")) {
-//    		hasSubject = true;
-//    	}
+    private boolean hasSubject(String mTitle) {
+		Log.d(TAG, "hasSubject called");
+		
+    	boolean hasSubject = false;
+    	String title = mTitle.toLowerCase();
+    	String rule = getSharedPreference("rulePref", "");
+    	rule = rule.toLowerCase();
+    	
+    	if ("".equals(rule)) {
+    		hasSubject = true;
+    	} else {
+        	String[] ruleArr = rule.split(";");
+        	for (String word : ruleArr) {
+        		if ("".equals(word.trim())) {
+        			continue;
+        		}
+        		
+        		if (title.trim().contains(word.trim())) {
+            		hasSubject = true;
+            		break;
+        		}
+        	}
+    	}
     	
     	return hasSubject;
     }
@@ -284,14 +305,16 @@ public class MeetingSilenceReceiver extends BroadcastReceiver {
     	boolean soundPref = getSharedPreference("soundPref", true);
     	boolean vibratePref = getSharedPreference("vibratePref", true);
     	
-		mAudioManager.setRingerMode(AudioManager.RINGER_MODE_SILENT);
-//    	if (soundPref && vibratePref) {
-//    		mAudioManager.setRingerMode(AudioManager.RINGER_MODE_SILENT);
-//    	} else if (soundPref) {
-//    		mAudioManager.setRingerMode(AudioManager.RINGER_MODE_VIBRATE);
-//    	} else if (vibratePref) {
-//    		mAudioManager.setRingerMode(AudioManager.RINGER_MODE_SILENT);
-//    	}
+    	if (soundPref && vibratePref) {
+    		mAudioManager.setRingerMode(AudioManager.RINGER_MODE_SILENT);
+    	} else if (soundPref) {
+        	mAudioManager.setVibrateSetting(AudioManager.VIBRATE_TYPE_NOTIFICATION, AudioManager.VIBRATE_SETTING_OFF);
+        	mAudioManager.setVibrateSetting(AudioManager.VIBRATE_TYPE_RINGER, AudioManager.VIBRATE_SETTING_OFF);
+    	} else if (vibratePref) {
+    		mAudioManager.setRingerMode(AudioManager.RINGER_MODE_SILENT);
+        	mAudioManager.setVibrateSetting(AudioManager.VIBRATE_TYPE_NOTIFICATION, getSharedPreference("vibrateTypeNotification", AudioManager.VIBRATE_SETTING_ON));
+        	mAudioManager.setVibrateSetting(AudioManager.VIBRATE_TYPE_RINGER, getSharedPreference("vibrateTypeRinger",  AudioManager.VIBRATE_SETTING_ON));
+    	}
     }
     
     private void turnOnSound() {
@@ -307,9 +330,9 @@ public class MeetingSilenceReceiver extends BroadcastReceiver {
     private void triggerNotification(String title, String begin, String end, String description) {
         CharSequence notificationTitle = " In Meeting";
         CharSequence notificationMessage = "Phone is in silence until " + end;
- 
+		
         Intent notificationIntent = new Intent(context, MeetingSilenceDialogActivity.class);
-        notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK); // Needed when calling from Service
+//        notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK); // Needed when calling from Service
         notificationIntent.putExtra("title", title);
         notificationIntent.putExtra("time", begin + " - " + end);
         notificationIntent.putExtra("description", description);
@@ -317,12 +340,12 @@ public class MeetingSilenceReceiver extends BroadcastReceiver {
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, notificationIntent, 0);
  
         final NotificationManager mNotificationManager = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
-        Notification notification = new Notification(R.drawable.mute, "Phone is in silence until " + end, System.currentTimeMillis());
+        Notification notification = new Notification(R.drawable.mute, notificationMessage, System.currentTimeMillis());
         notification.flags = Notification.FLAG_NO_CLEAR | Notification.FLAG_ONGOING_EVENT | Notification.FLAG_ONLY_ALERT_ONCE;
         notification.setLatestEventInfo(context, notificationTitle, notificationMessage, pendingIntent);
         mNotificationManager.notify(NOTIFICATION_ID, notification);
         
-        Log.d(TAG, "notificationMessage" + notificationMessage);
+        Log.d(TAG, "notificationMessage: " + notificationMessage);
     }
     
     private void cancelNotification() {
