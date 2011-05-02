@@ -26,28 +26,13 @@ public class MeetingSilenceDialogActivity extends Activity implements OnClickLis
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		Log.d(TAG, "onCreate called");
-		
+
 		setContentView(R.layout.dialog);
 		
 		hideButton = (Button)findViewById(R.id.buttonHide);
 		hideButton.setOnClickListener(this);
 		cancelButton = (Button)findViewById(R.id.buttonCancel);
 		cancelButton.setOnClickListener(this);
-		
-		Bundle extras = getIntent().getExtras();
-		String sTitle = extras.getString("title");
-		String sTime = extras.getString("time");
-		String sDescription = extras.getString("description");
-		
-		Log.d(TAG, "title: " + sTitle);
-		Log.d(TAG, "time: " + sTime);
-		Log.d(TAG, "desc: " + sDescription);
-		
-		this.setTitle(sTitle);
-		TextView time = (TextView)findViewById(R.id.time);
-		time.setText(sTime);
-		TextView description = (TextView)findViewById(R.id.description);
-		description.setText(sDescription);
 	}
 	
 	@Override
@@ -66,6 +51,16 @@ public class MeetingSilenceDialogActivity extends Activity implements OnClickLis
     protected void onResume() {
         super.onResume();
 		Log.d(TAG, "onResume called");
+		
+		String sTitle = getSharedPreference("title", "");
+		String sTime = getSharedPreference("time", "");
+		
+		Log.d(TAG, "title: " + sTitle);
+		Log.d(TAG, "time: " + sTime);
+		
+		this.setTitle(sTitle);
+		TextView time = (TextView)findViewById(R.id.time);
+		time.setText(sTime);
     }
     
 	@Override
@@ -109,6 +104,8 @@ public class MeetingSilenceDialogActivity extends Activity implements OnClickLis
     private void cancelNotification() {
         final NotificationManager mNotificationManager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
         mNotificationManager.cancel(NOTIFICATION_ID);
+        setSharedPreference("title", "");
+        setSharedPreference("time", "");
     }
     
 //    private boolean getSharedPreference(String key, boolean defaultValue) {
@@ -135,15 +132,15 @@ public class MeetingSilenceDialogActivity extends Activity implements OnClickLis
 //		editor.commit();
 //    }
     
-//    private String getSharedPreference(String key, String defaultValue) {
-//		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-//		return sp.getString(key, defaultValue);
-//    }
+    private String getSharedPreference(String key, String defaultValue) {
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+		return sp.getString(key, defaultValue);
+    }
     
-//    private void setSharedPreference(String key, String value) {
-//		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-//		SharedPreferences.Editor editor = sp.edit();
-//		editor.putString(key, value);
-//		editor.commit();
-//    }
+    private void setSharedPreference(String key, String value) {
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+		SharedPreferences.Editor editor = sp.edit();
+		editor.putString(key, value);
+		editor.commit();
+    }
 }

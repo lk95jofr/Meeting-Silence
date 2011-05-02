@@ -22,7 +22,7 @@
 		<activity android:name=".activity.MeetingSilenceDialogActivity" android:theme="@android:style/Theme.Dialog">
       	</activity>
       	
-      	<activity android:name=".preference.Preferences" android:label="@string/app_name">
+      	<activity android:name=".preference.MeetingSilencePreferences" android:label="@string/app_name">
 			<intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

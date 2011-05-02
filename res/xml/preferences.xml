@@ -3,7 +3,7 @@
 	<PreferenceCategory android:title="Scheduling">
 		<CheckBoxPreference
         	android:title="Time / day to schedule"
-            android:defaultValue="false"
+            android:defaultValue="true"
             android:summary="Which time and day to schedule"
             android:key="allDayPref" />
 		<EditTextPreference

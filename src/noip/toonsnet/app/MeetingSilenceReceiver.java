@@ -72,7 +72,7 @@ public class MeetingSilenceReceiver extends BroadcastReceiver {
     	boolean isInMeeting = false;
     	boolean ignoreSpanOverDaysEvents = getSharedPreference("ignoreSpanOverDaysEventsPref", true);
     	boolean ignoreAllDayEvents = getSharedPreference("ignoreAllDayEventPref", true);
-    	boolean hasTimeAndDay = !getSharedPreference("allDayPref", false);
+    	boolean hasTimeAndDay = !getSharedPreference("allDayPref", true);
     	
     	if (!hasTimeAndDay) {
 	    	String startPref = getSharedPreference("startPref", "8:00");
@@ -332,10 +332,9 @@ public class MeetingSilenceReceiver extends BroadcastReceiver {
         CharSequence notificationMessage = "Phone is in silence until " + end;
 		
         Intent notificationIntent = new Intent(context, MeetingSilenceDialogActivity.class);
-//        notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK); // Needed when calling from Service
-        notificationIntent.putExtra("title", title);
-        notificationIntent.putExtra("time", begin + " - " + end);
-        notificationIntent.putExtra("description", description);
+//        notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
+        setSharedPreference("title", title);
+        setSharedPreference("time", begin + " - " + end);
         
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, notificationIntent, 0);
  
@@ -351,6 +350,8 @@ public class MeetingSilenceReceiver extends BroadcastReceiver {
     private void cancelNotification() {
         final NotificationManager mNotificationManager = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
         mNotificationManager.cancel(NOTIFICATION_ID);
+        setSharedPreference("title", "");
+        setSharedPreference("time", "");
     }
     
     private String calendarToString(Calendar calendar) {
