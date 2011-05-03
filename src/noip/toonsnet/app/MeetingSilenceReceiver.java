@@ -3,25 +3,14 @@ package noip.toonsnet.app;
 import java.util.Calendar;
 import java.util.Date;
 
-import noip.toonsnet.app.activity.MeetingSilenceDialogActivity;
 import noip.toonsnet.app.preference.ListPreferenceMultiSelect;
-
-import android.app.AlarmManager;
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.database.Cursor;
-import android.media.AudioManager;
 import android.net.Uri;
-import android.preference.PreferenceManager;
 import android.text.format.DateUtils;
-import android.util.Log;
-import android.widget.Toast;
 
 public class MeetingSilenceReceiver extends BroadcastReceiver {
     private static final String TAG = "MeetingSilenceReceiver";
@@ -30,15 +19,13 @@ public class MeetingSilenceReceiver extends BroadcastReceiver {
     
 	private Calendar nextSchedule;
 	
-	private boolean isPhoneSilent = false;
-	private static final int NOTIFICATION_ID = 271172;
+	private MeetingSilence meetingSilence = null;
 	
 	@Override
 	public void onReceive(Context mContext, Intent intent) {
 		context = mContext;
-
-		isPhoneSilent = getSharedPreference("isPhoneSilent", false);
-    	Log.d(TAG, "isPhoneSilent: " + isPhoneSilent);
+		
+		meetingSilence = new MeetingSilence(context);
 		
 		if (intent.getAction().equals("android.intent.action.BOOT_COMPLETED")) {
 	    	
@@ -49,35 +36,23 @@ public class MeetingSilenceReceiver extends BroadcastReceiver {
 		}
 		
 		// To remove, only debug
-		Toast.makeText(context, intent.getAction() + ", " + calendarToString(nextSchedule), Toast.LENGTH_LONG).show();
-		setAlarmNotification();
-	}
-	
-	private void setAlarmNotification() {
-		Intent mIntent = new Intent(context, MeetingSilenceReceiver.class);
-		mIntent.setAction("noip.toonsnet.app.MeetingSilenceReceiver");
-		
-	    PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, mIntent, 0);
-	    
-	    nextSchedule.set(Calendar.SECOND, 0); // Make sure we run "on the minute"
-    	Log.d(TAG, "Next schedule: " + calendarToString(nextSchedule));
-
-		AlarmManager mAlarmManager = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
-		mAlarmManager.set(AlarmManager.RTC_WAKEUP, nextSchedule.getTimeInMillis(), pendingIntent);
+//		Toast.makeText(context, intent.getAction() + ", " + meetingSilence.calendarToString(nextSchedule), Toast.LENGTH_LONG).show();
+		meetingSilence.setAlarmNotification(nextSchedule);
 	}
 	
 	private void iterateCalendars() {
-		Log.d(TAG, "iterateCalendars called");
+//		Log.d(TAG, "iterateCalendars called");
     	
     	boolean isInMeeting = false;
-    	boolean ignoreSpanOverDaysEvents = getSharedPreference("ignoreSpanOverDaysEventsPref", true);
-    	boolean ignoreAllDayEvents = getSharedPreference("ignoreAllDayEventPref", true);
-    	boolean hasTimeAndDay = !getSharedPreference("allDayPref", true);
+    	boolean isPhoneSilent = meetingSilence.isPhoneSilent();
+    	boolean ignoreSpanOverDaysEvents = meetingSilence.getSharedPreference("ignoreSpanOverDaysEventsPref", true);
+    	boolean ignoreAllDayEvents = meetingSilence.getSharedPreference("ignoreAllDayEventPref", true);
+    	boolean hasTimeAndDay = !meetingSilence.getSharedPreference("allDayPref", false);
     	
     	if (!hasTimeAndDay) {
-	    	String startPref = getSharedPreference("startPref", "8:00");
+	    	String startPref = meetingSilence.getSharedPreference("startPref", "8:00");
 	    	startPref = startPref.replace(".", ":");
-	    	String endPref = getSharedPreference("endPref", "18:00");
+	    	String endPref = meetingSilence.getSharedPreference("endPref", "18:00");
 	    	endPref = endPref.replace(".", ":");
 	    	
 	    	String[] startTime = startPref.split(":");
@@ -104,19 +79,19 @@ public class MeetingSilenceReceiver extends BroadcastReceiver {
 			Calendar now = Calendar.getInstance();
 	    	now.set(Calendar.SECOND, 0);
 	    	
-	    	Log.d(TAG, "START: " + calendarToString(cStartTime) + ", " + cStartTime.getTimeInMillis());
-	    	Log.d(TAG, "NOW: " + calendarToString(now) + ", " + now.getTimeInMillis());
-	    	Log.d(TAG, "END: " + calendarToString(cEndTime) + ", " + cEndTime.getTimeInMillis());
+//	    	Log.d(TAG, "START: " + meetingSilence.calendarToString(cStartTime) + ", " + cStartTime.getTimeInMillis());
+//	    	Log.d(TAG, "NOW: " + meetingSilence.calendarToString(now) + ", " + now.getTimeInMillis());
+//	    	Log.d(TAG, "END: " + meetingSilence.calendarToString(cEndTime) + ", " + cEndTime.getTimeInMillis());
 	    	
 	    	if ((now.getTimeInMillis() >= cStartTime.getTimeInMillis()) && (now.getTimeInMillis() < cEndTime.getTimeInMillis())) {
-	    		Log.d(TAG, "We have the right time");
-		    	String value = getSharedPreference("multiListPref", "");
+//	    		Log.d(TAG, "We have the right time");
+		    	String value = meetingSilence.getSharedPreference("multiListPref", "");
 		    	String[] vals = ListPreferenceMultiSelect.parseStoredValue(value);
 		    	if (vals != null) {
 		        	for (int i = 0; i < vals.length; i++) {
 		        		int val = Integer.parseInt(vals[i].trim());
 		        		if (now.get(Calendar.DAY_OF_WEEK) == val) {
-		    	    		Log.d(TAG, "We have the right day");
+//		    	    		Log.d(TAG, "We have the right day");
 		        			hasTimeAndDay = true;
 		        			break;
 		        		}
@@ -125,7 +100,7 @@ public class MeetingSilenceReceiver extends BroadcastReceiver {
 	    	}
     	}
     	
-		Log.d(TAG, "hasTimeAndDay: " + hasTimeAndDay);
+//		Log.d(TAG, "hasTimeAndDay: " + hasTimeAndDay);
     	
 		Uri calendarUri = Uri.parse("content://com.android.calendar/calendars");
 		Uri eventUri = Uri.parse("content://com.android.calendar/instances/when");
@@ -135,129 +110,136 @@ public class MeetingSilenceReceiver extends BroadcastReceiver {
     		eventUri    = Uri.parse("content://calendar/events"); // ??????
     	}
     	
-    	Log.d(TAG, "calendarUri: " + calendarUri.toString());
-    	Log.d(TAG, "eventUri: " + eventUri.toString());
+//    	Log.d(TAG, "calendarUri: " + calendarUri.toString());
+//    	Log.d(TAG, "eventUri: " + eventUri.toString());
 	     
 		nextSchedule = Calendar.getInstance();
 		nextSchedule.add(Calendar.MINUTE, 5); // Next schedule is now + 5 min
 		
-		Log.d(TAG, "Possible schedule: " + calendarToString(nextSchedule));
+//		Log.d(TAG, "Possible schedule: " + meetingSilence.calendarToString(nextSchedule));
 		
-    	String[] projectionCalendar = new String[] { "_id", "name" };
-    	Cursor calendarCursor = context.getContentResolver().query(calendarUri, projectionCalendar, "selected=1", null, null);
-    	if (calendarCursor.moveToFirst()) {
-    		String calName = "";
-    		String calId = "";
-    		int nameColumn = calendarCursor.getColumnIndex("name");
-    		int idColumn = calendarCursor.getColumnIndex("_id");
-    		
-    		do {
-    			calName = calendarCursor.getString(nameColumn);
-    		    if (calName == null) { // Exchange always null??? And only exchange???
-    		    	calName = "Exchange";
-    		    }
-    		    
-    		    calId = calendarCursor.getString(idColumn);
-    			
-    		    Log.d(TAG, "Name: " + calName + ", ID: " + calId);
-    		    Uri.Builder builder = eventUri.buildUpon();
-    		    long now = new Date().getTime();
-    		    ContentUris.appendId(builder, now); // From
-    		    ContentUris.appendId(builder, now + (DateUtils.MINUTE_IN_MILLIS * 10)); // To
-
-    	    	String[] projectionEvents = new String[] {"event_id", "title", "begin", "end", "allDay","description"};
-    	        Cursor eventCursor = context.getContentResolver().query(builder.build(), projectionEvents, "Calendars._id=" + calId, null, "startDay ASC, startMinute ASC");    		    
-    	        if (eventCursor.moveToFirst()) {
-    	        	do {
-	    		    	String title = eventCursor.getString(eventCursor.getColumnIndex("title"));
-	    		    	if (title == null) {
-	    		    		title = "";
-	    		    	}
-	    		    	
-	    		    	Calendar begin = Calendar.getInstance();
-	    		    	begin.setTimeInMillis(eventCursor.getLong(eventCursor.getColumnIndex("begin")));
-	    		    	
-	    		    	Calendar end = Calendar.getInstance();
-	    		    	end.setTimeInMillis(eventCursor.getLong(eventCursor.getColumnIndex("end")));
-	    		    	
-	    		    	Boolean allDay = !eventCursor.getString(eventCursor.getColumnIndex("allDay")).equals("0");
-	    		    	
-	    		    	String description = eventCursor.getString(eventCursor.getColumnIndex("description"));
-	    		    	if (description == null) {
-	    		    		description = "";
-	    		    	}
-	    		    	
-	    		    	Log.d(TAG, "Title: " + title + " Begin: " + calendarToString(begin) + " End: " + calendarToString(end) + " All Day: " + allDay);
-	    		    	if (!"".equals(description)) {
-	    		    		Log.d(TAG, "Description: " + description);
-	    		    	}
-
-	    		    	if (ignoreAllDayEvents && allDay) {
-	    		    		Log.d(TAG, "ignoreAllDayEvents");
-	    		    		continue;
-	    		    	}
-	    		    	
-	    		    	if (ignoreSpanOverDaysEvents) {
-	    		    		if (begin.get(Calendar.DAY_OF_MONTH) != end.get(Calendar.DAY_OF_MONTH)) {
-		    		    		Log.d(TAG, "ignoreLongEvents");
-	    		    			continue;
-	    		    		}
-	    		    	}
-	    		    	
-	    		    	if (hasTimeAndDay) {
-		    		    	if (hasSubject(title)) {
-		    		    		Log.d(TAG, "We have the right title");
+		if (hasTimeAndDay) {
+	    	String[] projectionCalendar = new String[] { "_id", "name" };
+	    	Cursor calendarCursor = context.getContentResolver().query(calendarUri, projectionCalendar, "selected=1", null, null);
+	    	if (calendarCursor.moveToFirst()) {
+	    		String calName = "";
+	    		String calId = "";
+	    		int nameColumn = calendarCursor.getColumnIndex("name");
+	    		int idColumn = calendarCursor.getColumnIndex("_id");
+	    		
+	    		do {
+	    			calName = calendarCursor.getString(nameColumn);
+	    		    if (calName == null) { // Exchange always null??? And only exchange???
+	    		    	calName = "Exchange";
+	    		    }
+	    		    
+	    		    calId = calendarCursor.getString(idColumn);
+	    			
+//	    		    Log.d(TAG, "Name: " + calName + ", ID: " + calId);
+	    		    Uri.Builder builder = eventUri.buildUpon();
+	    		    long now = new Date().getTime();
+	    		    ContentUris.appendId(builder, now); // From
+	    		    ContentUris.appendId(builder, now + (DateUtils.MINUTE_IN_MILLIS * 10)); // To
+	
+	    	    	String[] projectionEvents = new String[] {"event_id", "title", "begin", "end", "allDay","description","eventLocation"};
+	    	        Cursor eventCursor = context.getContentResolver().query(builder.build(), projectionEvents, "Calendars._id=" + calId, null, "startDay ASC, startMinute ASC");    		    
+	    	        if (eventCursor.moveToFirst()) {
+	    	        	do {
+		    		    	String title = eventCursor.getString(eventCursor.getColumnIndex("title"));
+		    		    	if (title == null) {
+		    		    		title = "";
+		    		    	}
+		    		    	
+		    		    	Calendar begin = Calendar.getInstance();
+		    		    	begin.setTimeInMillis(eventCursor.getLong(eventCursor.getColumnIndex("begin")));
+		    		    	
+		    		    	Calendar end = Calendar.getInstance();
+		    		    	end.setTimeInMillis(eventCursor.getLong(eventCursor.getColumnIndex("end")));
+		    		    	
+		    		    	Boolean allDay = !eventCursor.getString(eventCursor.getColumnIndex("allDay")).equals("0");
+		    		    	
+		    		    	String description = eventCursor.getString(eventCursor.getColumnIndex("description"));
+		    		    	if (description == null) {
+		    		    		description = "";
+		    		    	}
+		    		    	
+		    		    	String eventLocation = eventCursor.getString(eventCursor.getColumnIndex("eventLocation"));
+		    		    	if (eventLocation == null) {
+		    		    		eventLocation = "";
+		    		    	}
+		    		    	
+//		    		    	Log.d(TAG, "Title: " + title + " Begin: " + meetingSilence.calendarToString(begin) + " End: " + meetingSilence.calendarToString(end) + " All Day: " + allDay + " Location: " + eventLocation);
+//		    		    	Log.d(TAG, "Description: " + description);
+	
+		    		    	if (ignoreAllDayEvents && allDay) {
+//		    		    		Log.d(TAG, "ignoreAllDayEvents");
+		    		    		continue;
+		    		    	}
+		    		    	
+		    		    	if (ignoreSpanOverDaysEvents) {
+		    		    		if (begin.get(Calendar.DAY_OF_MONTH) != end.get(Calendar.DAY_OF_MONTH)) {
+//			    		    		Log.d(TAG, "ignoreLongEvents");
+		    		    			continue;
+		    		    		}
+		    		    	}
+		    		    	
+		    		    	boolean bKeywords = meetingSilence.getSharedPreference("keywordPref", true);
+		    		    	boolean bLocation = meetingSilence.getSharedPreference("locationPref", false);
+		    		    	if ((bKeywords && hasSubject(title)) || (bLocation && hasEventLocation(eventLocation))) {
+//		    		    		Log.d(TAG, "We have the right title or location");
 		    		    		isInMeeting = hasMeeting(begin, end, allDay);
 		    		    		if (isInMeeting) {
-			    		    		Log.d(TAG, "We have a meeting");
-			    		    		
-		    		    			triggerNotification(title, calendarToString(begin), calendarToString(end), description);
-			    		    		if (!isPhoneSilent) {
-			    		    			turnOffSound();
-			    		    		}
-			    		    
-			    		    		nextSchedule = end;
-			    		    		Log.d(TAG, "End schedule: " + calendarToString(nextSchedule));
-			    		    	} else {
-			    		    		if (begin.before(nextSchedule)) {
-			    		    			nextSchedule = begin;
-				    		    		Log.d(TAG, "Begin schedule: " + calendarToString(nextSchedule));
-			    		    		}
-			    		    	}
+//		    		    			Log.d(TAG, "We have a meeting");
+				    		    		
+		    		    			meetingSilence.triggerNotification(title, meetingSilence.calendarToString(begin), meetingSilence.calendarToString(end), description);
+		    		    			if (!isPhoneSilent) {
+		    		    				meetingSilence.turnOffSound();
+		    		        			isPhoneSilent = true;
+		    		    			}
+				    		    
+		    		    			nextSchedule = end;
+//		    		    			Log.d(TAG, "End schedule: " + meetingSilence.calendarToString(nextSchedule));
+		    		    		} else {
+		    		    			if (begin.before(nextSchedule)) {
+		    		    				nextSchedule = begin;
+//		    		    				Log.d(TAG, "Begin schedule: " + meetingSilence.calendarToString(nextSchedule));
+		    		    			}
+		    		    		}
 		    		    	}
-	    		    	}
-    	        	} while (eventCursor.moveToNext() && !isInMeeting);
-    	        }
-    	        
-    	        if (eventCursor != null) {
-    	        	eventCursor.close();
-    	        }
-    		} while (calendarCursor.moveToNext() && !isInMeeting);
-    	}
-    	
-    	if (calendarCursor != null) {
-    		calendarCursor.close();
-    	}
-
+	    	        	} while (eventCursor.moveToNext() && !isInMeeting);
+	    	        }
+	    	        
+	    	        if (eventCursor != null) {
+	    	        	eventCursor.close();
+	    	        }
+	    		} while (calendarCursor.moveToNext() && !isInMeeting);
+	    	}
+	    	
+	    	if (calendarCursor != null) {
+	    		calendarCursor.close();
+	    	}
+		}
+		
     	if (!isInMeeting) {
     		if (isPhoneSilent) {
-    			cancelNotification();
-    			turnOnSound();
+    			meetingSilence.cancelNotification();
+    			meetingSilence.turnOnSound();
+    			isPhoneSilent = false;
     		}
     	}
     	
-    	setSharedPreference("isPhoneSilent", isPhoneSilent);
+    	meetingSilence.setIsPhoneSilent(isPhoneSilent);
     }
     
     private boolean hasMeeting(Calendar begin, Calendar end, boolean allDay) {
-		Log.d(TAG, "hasMeeting called");
+//		Log.d(TAG, "hasMeeting called");
 
 		Calendar now = Calendar.getInstance();
     	now.set(Calendar.SECOND, 0);
     	
-    	Log.d(TAG, "BEGIN: " + calendarToString(begin) + ", " + begin.getTimeInMillis());
-    	Log.d(TAG, "NOW: " + calendarToString(now) + ", " + now.getTimeInMillis());
-    	Log.d(TAG, "END: " + calendarToString(end) + ", " + end.getTimeInMillis());
+//    	Log.d(TAG, "BEGIN: " + meetingSilence.calendarToString(begin) + ", " + begin.getTimeInMillis());
+//    	Log.d(TAG, "NOW: " + meetingSilence.calendarToString(now) + ", " + now.getTimeInMillis());
+//    	Log.d(TAG, "END: " + meetingSilence.calendarToString(end) + ", " + end.getTimeInMillis());
     	
     	if ((now.getTimeInMillis() >= begin.getTimeInMillis()) && (now.getTimeInMillis() < end.getTimeInMillis())) {
     		return true;
@@ -267,11 +249,11 @@ public class MeetingSilenceReceiver extends BroadcastReceiver {
     }
     
     private boolean hasSubject(String mTitle) {
-		Log.d(TAG, "hasSubject called");
+//		Log.d(TAG, "hasSubject called");
 		
     	boolean hasSubject = false;
     	String title = mTitle.toLowerCase();
-    	String rule = getSharedPreference("rulePref", "");
+    	String rule = meetingSilence.getSharedPreference("rulePref", "");
     	rule = rule.toLowerCase();
     	
     	if ("".equals(rule)) {
@@ -290,115 +272,36 @@ public class MeetingSilenceReceiver extends BroadcastReceiver {
         	}
     	}
     	
+//    	Log.d(TAG, "hasSubject: " + hasSubject);
     	return hasSubject;
     }
     
-    private void turnOffSound() {
-		Log.d(TAG, "turnOffSound called");
-		isPhoneSilent = true;
+    private boolean hasEventLocation(String mLocation) {
+//		Log.d(TAG, "hasEventLocation called");
+		
+    	boolean hasLocation = false;
+    	String location = mLocation.toLowerCase();
+    	String eventLocationPref = meetingSilence.getSharedPreference("eventLocationPref", "");
+    	eventLocationPref = eventLocationPref.toLowerCase();
+//    	Log.d(TAG, "eventLocationPref: " + eventLocationPref);
     	
-    	final AudioManager mAudioManager = (AudioManager)context.getSystemService(Context.AUDIO_SERVICE);
-    	setSharedPreference("ringerMode", mAudioManager.getRingerMode());
-    	setSharedPreference("vibrateTypeNotification", mAudioManager.getVibrateSetting(AudioManager.VIBRATE_TYPE_NOTIFICATION));
-    	setSharedPreference("vibrateTypeRinger", mAudioManager.getVibrateSetting(AudioManager.VIBRATE_TYPE_RINGER));
-    	
-    	boolean soundPref = getSharedPreference("soundPref", true);
-    	boolean vibratePref = getSharedPreference("vibratePref", true);
-    	
-    	if (soundPref && vibratePref) {
-    		mAudioManager.setRingerMode(AudioManager.RINGER_MODE_SILENT);
-    	} else if (soundPref) {
-        	mAudioManager.setVibrateSetting(AudioManager.VIBRATE_TYPE_NOTIFICATION, AudioManager.VIBRATE_SETTING_OFF);
-        	mAudioManager.setVibrateSetting(AudioManager.VIBRATE_TYPE_RINGER, AudioManager.VIBRATE_SETTING_OFF);
-    	} else if (vibratePref) {
-    		mAudioManager.setRingerMode(AudioManager.RINGER_MODE_SILENT);
-        	mAudioManager.setVibrateSetting(AudioManager.VIBRATE_TYPE_NOTIFICATION, getSharedPreference("vibrateTypeNotification", AudioManager.VIBRATE_SETTING_ON));
-        	mAudioManager.setVibrateSetting(AudioManager.VIBRATE_TYPE_RINGER, getSharedPreference("vibrateTypeRinger",  AudioManager.VIBRATE_SETTING_ON));
+    	if ("".equals(eventLocationPref)) {
+    		hasLocation = true;
+    	} else {
+        	String[] locationArr = eventLocationPref.split(";");
+        	for (String word : locationArr) {
+        		if ("".equals(word.trim())) {
+        			continue;
+        		}
+        		
+        		if (location.trim().contains(word.trim())) {
+            		hasLocation = true;
+            		break;
+        		}
+        	}
     	}
-    }
-    
-    private void turnOnSound() {
-		Log.d(TAG, "turnOnSound called");
-		isPhoneSilent = false;
     	
-    	final AudioManager mAudioManager = (AudioManager)context.getSystemService(Context.AUDIO_SERVICE);
-    	mAudioManager.setRingerMode(getSharedPreference("ringerMode", AudioManager.RINGER_MODE_NORMAL));
-    	mAudioManager.setVibrateSetting(AudioManager.VIBRATE_TYPE_NOTIFICATION, getSharedPreference("vibrateTypeNotification", AudioManager.VIBRATE_SETTING_ON));
-    	mAudioManager.setVibrateSetting(AudioManager.VIBRATE_TYPE_RINGER, getSharedPreference("vibrateTypeRinger",  AudioManager.VIBRATE_SETTING_ON));
-    }
-    
-    private void triggerNotification(String title, String begin, String end, String description) {
-        CharSequence notificationTitle = " In Meeting";
-        CharSequence notificationMessage = "Phone is in silence until " + end;
-		
-        Intent notificationIntent = new Intent(context, MeetingSilenceDialogActivity.class);
-//        notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
-        setSharedPreference("title", title);
-        setSharedPreference("time", begin + " - " + end);
-        
-        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, notificationIntent, 0);
- 
-        final NotificationManager mNotificationManager = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
-        Notification notification = new Notification(R.drawable.mute, notificationMessage, System.currentTimeMillis());
-        notification.flags = Notification.FLAG_NO_CLEAR | Notification.FLAG_ONGOING_EVENT | Notification.FLAG_ONLY_ALERT_ONCE;
-        notification.setLatestEventInfo(context, notificationTitle, notificationMessage, pendingIntent);
-        mNotificationManager.notify(NOTIFICATION_ID, notification);
-        
-        Log.d(TAG, "notificationMessage: " + notificationMessage);
-    }
-    
-    private void cancelNotification() {
-        final NotificationManager mNotificationManager = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
-        mNotificationManager.cancel(NOTIFICATION_ID);
-        setSharedPreference("title", "");
-        setSharedPreference("time", "");
-    }
-    
-    private String calendarToString(Calendar calendar) {
-		int hour = calendar.get(Calendar.HOUR_OF_DAY);
-		int minute = calendar.get(Calendar.MINUTE);
-		
-		StringBuilder sBuilder = new StringBuilder();
-		sBuilder.append((hour < 10 ? ("0" + hour) : hour));
-		sBuilder.append(":");
-		sBuilder.append((minute < 10 ? ("0" + minute) : minute));
-		
-		return sBuilder.toString();
-    }
-    
-    private boolean getSharedPreference(String key, boolean defaultValue) {
-		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
-		return sp.getBoolean(key, defaultValue);
-    }
-    
-    private void setSharedPreference(String key, boolean value) {
-		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
-		SharedPreferences.Editor editor = sp.edit();
-		editor.putBoolean(key, value);
-		editor.commit();
-    }
-    
-    private int getSharedPreference(String key, int defaultValue) {
-		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
-		return sp.getInt(key, defaultValue);
-    }
-    
-    private void setSharedPreference(String key, int value) {
-		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
-		SharedPreferences.Editor editor = sp.edit();
-		editor.putInt(key, value);
-		editor.commit();
-    }
-    
-    private String getSharedPreference(String key, String defaultValue) {
-		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
-		return sp.getString(key, defaultValue);
-    }
-    
-    private void setSharedPreference(String key, String value) {
-		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
-		SharedPreferences.Editor editor = sp.edit();
-		editor.putString(key, value);
-		editor.commit();
+//    	Log.d(TAG, "hasLocation: " + hasLocation);
+    	return hasLocation;
     }
 }
