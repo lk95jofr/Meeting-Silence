@@ -71,7 +71,7 @@ public class ListPreferenceMultiSelect extends ListPreference {
     	if (vals != null) {
         	for (int j = 0; j < vals.length; j++) {
         		String val = vals[j].trim();
-            	for (int i=0; i<entryValues.length; i++) {
+            	for (int i=0; i < entryValues.length; i++) {
             		CharSequence entry = entryValues[i];
                 	if (entry.equals(val)) {
             			mClickedDialogEntryIndices[i] = true;
@@ -87,9 +87,9 @@ public class ListPreferenceMultiSelect extends ListPreference {
 //        super.onDialogClosed(positiveResult);
         
     	CharSequence[] entryValues = getEntryValues();
-        if (positiveResult && entryValues != null) {
+        if (positiveResult && (entryValues != null)) {
         	StringBuffer value = new StringBuffer();
-        	for ( int i=0; i<entryValues.length; i++ ) {
+        	for ( int i=0; i < entryValues.length; i++ ) {
         		if ( mClickedDialogEntryIndices[i] ) {
         			value.append(entryValues[i]).append(SEPARATOR);
         		}

@@ -77,7 +77,7 @@
         	android:title="Turn off sound"
             android:defaultValue="true"
             android:summary=""
-            android:key="soundPref" />
+            android:key="soundPref"/>
 		<CheckBoxPreference
         	android:title="Turn off vibrate"
             android:defaultValue="true"

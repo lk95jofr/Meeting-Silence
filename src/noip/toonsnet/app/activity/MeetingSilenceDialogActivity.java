@@ -29,8 +29,6 @@ public class MeetingSilenceDialogActivity extends Activity implements OnClickLis
 		hideButton.setOnClickListener(this);
 		cancelButton = (Button)findViewById(R.id.buttonCancel);
 		cancelButton.setOnClickListener(this);
-		
-		meetingSilence = new MeetingSilence(getBaseContext());
 	}
 	
 	@Override
@@ -49,6 +47,8 @@ public class MeetingSilenceDialogActivity extends Activity implements OnClickLis
     protected void onResume() {
         super.onResume();
 //		Log.d(TAG, "onResume called");
+		
+		meetingSilence = new MeetingSilence(getBaseContext());
 		
 		String sTitle = meetingSilence.getSharedPreference("title", "");
 		String sTime = meetingSilence.getSharedPreference("time", "");

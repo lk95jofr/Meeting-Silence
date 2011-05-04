@@ -1,22 +1,24 @@
 package noip.toonsnet.app.preference;
  
 import java.util.Calendar;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import noip.toonsnet.app.MeetingSilence;
 import noip.toonsnet.app.R;
 import android.content.SharedPreferences;
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.os.Bundle;
-import android.preference.Preference;
-import android.preference.Preference.OnPreferenceChangeListener;
-import android.preference.Preference.OnPreferenceClickListener;
+import android.preference.EditTextPreference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
+import android.util.Log;
  
-public class MeetingSilencePreferences extends PreferenceActivity implements OnPreferenceClickListener, OnPreferenceChangeListener {
+public class MeetingSilencePreferences extends PreferenceActivity implements OnSharedPreferenceChangeListener {
     private static final String TAG = "MeetingSilencePreferences";
     
-//    Preference startPref;
-//    Preference endPref;
+    private EditTextPreference mStartPref;
+    private EditTextPreference mEndPref;
     
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -35,8 +37,8 @@ public class MeetingSilencePreferences extends PreferenceActivity implements OnP
 		
 		addPreferencesFromResource(R.xml.preferences);
 		
-//		startPref.setOnPreferenceChangeListener(this);
-//		endPref.setOnPreferenceChangeListener(this);
+		mStartPref = (EditTextPreference)getPreferenceScreen().findPreference("startPref");
+		mEndPref = (EditTextPreference)getPreferenceScreen().findPreference("endPref");
 	}
 
 	@Override
@@ -55,12 +57,16 @@ public class MeetingSilencePreferences extends PreferenceActivity implements OnP
     protected void onResume() {
         super.onResume();
 //		Log.d(TAG, "onResume called");
+        
+		getPreferenceScreen().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
     }
     
 	@Override
 	protected void onPause() {
 		super.onPause();
 //		Log.d(TAG, "onPause called");
+        
+		getPreferenceScreen().getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);
 	}
 	
 	@Override
@@ -76,18 +82,36 @@ public class MeetingSilencePreferences extends PreferenceActivity implements OnP
 //		Log.d(TAG, "onDestroy called");
     }
     
-	public boolean onPreferenceChange(Preference preference, Object o) {
-//		if ((preference == startPref) || (preference == endPref)) {
-//			SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-//			String start =  sp.getString("startPref", "8:00");
-//			String end =  sp.getString("endPref", "18:00");
-//			// check for forbidden characters
-//		}
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+		Log.d(TAG, "onSharedPreferenceChanged called, " + key);
 		
-		return true;
-	}
-	
-	public boolean onPreferenceClick(Preference preference) {
-		return true;
-	}
+        if (key.equals("startPref")) {
+    		Log.d(TAG, "startPref clicked");
+    		String value = sharedPreferences.getString("startPref", "8:00");
+    		String[] vArr = value.split(":");
+    		Log.d(TAG, "Arr 0 " + vArr[0]);
+    		Log.d(TAG, "Arr 1 " + vArr[1]);
+
+    		try {
+	    		Pattern pattern = Pattern.compile("^[0-9]$");
+	    		Matcher m0 = pattern.matcher(vArr[0]);
+	    		Matcher m1 = pattern.matcher(vArr[1]);
+	    		if(!m0.matches() || !m1.matches()) {
+	        		Log.d(TAG, "No match");
+	      			value = "8:00";
+	    		}
+    		} catch (ArrayIndexOutOfBoundsException e) {
+        		Log.d(TAG, "Exception: " + e.getMessage());
+    			value = "8:00";
+    		}
+
+    		Log.d(TAG, "Value: " + value);
+//			mStartPref.setText(value);
+        } else if (key.equals("endPref")) {
+    		Log.d(TAG, "endPref clicked");
+    		String value = sharedPreferences.getString("endPref", "18:00");
+//    		mEndPref.setText(value);
+        }
+        
+    }
 }
