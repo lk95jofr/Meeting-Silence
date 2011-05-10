@@ -25,19 +25,19 @@ public class MeetingSilence {
 	
     private Context context;
     
-	private Uri calendarUri = Uri.parse("content://com.android.calendar/calendars");
-	private Uri eventUri = Uri.parse("content://com.android.calendar/instances/when");
+	private static final Uri CALENDAR_URI = Uri.parse("content://com.android.calendar/calendars");
+	private static final Uri EVENT_URI = Uri.parse("content://com.android.calendar/instances/when");
     
     public MeetingSilence(Context mContext) {
     	context = mContext;
     	
-    	if (android.os.Build.VERSION.SDK_INT <= 7 ) {
-    		calendarUri = Uri.parse("content://calendar/calendars"); 
-    		eventUri    = Uri.parse("content://calendar/events"); // ??????
-    	}
+//    	if (android.os.Build.VERSION.SDK_INT <= 7 ) {
+//    		calendarUri = Uri.parse("content://calendar/calendars"); 
+//    		eventUri    = Uri.parse("content://calendar/events"); // ??????
+//    	}
     	
-    	Log.d(TAG, "calendarUri: " + calendarUri.toString());
-    	Log.d(TAG, "eventUri: " + eventUri.toString());
+//    	Log.d(TAG, "calendarUri: " + calendarUri.toString());
+//    	Log.d(TAG, "eventUri: " + eventUri.toString());
     }
     
 	public void setAlarmNotification(Calendar nextSchedule) {
@@ -126,13 +126,13 @@ public class MeetingSilence {
     
     public Cursor getCalendarCursor() {
     	final String[] projectionCalendar = new String[] { "_id", "name" };
-    	Cursor calendarCursor = context.getContentResolver().query(calendarUri, projectionCalendar, "selected=1", null, null);
+    	Cursor calendarCursor = context.getContentResolver().query(CALENDAR_URI, projectionCalendar, "selected=1", null, null);
     	
     	return calendarCursor;
     }
     
     public Cursor getEventCursor(String id) {
-	    Uri.Builder builder = eventUri.buildUpon();
+	    Uri.Builder builder = EVENT_URI.buildUpon();
 	    long now = System.currentTimeMillis();
 	    ContentUris.appendId(builder, now); // From
 	    ContentUris.appendId(builder, now + (DateUtils.MINUTE_IN_MILLIS * 10)); // To

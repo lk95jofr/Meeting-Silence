@@ -2,10 +2,7 @@ package noip.toonsnet.app.activity;
 
 import noip.toonsnet.app.R;
 import android.app.Activity;
-import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
-import android.util.Log;
 
 public class MeetingSilenceActivity extends Activity {
     private static final String TAG = "MeetingSilenceActivity";
@@ -16,6 +13,27 @@ public class MeetingSilenceActivity extends Activity {
 //		Log.d(TAG, "onCreate called");
 		
         setContentView(R.layout.main);
+//        
+//        AccountManager mgr = AccountManager.get(this);
+//        Account[] accts = mgr.getAccountsByType("com.google");
+//        Account acct = accts[0];
+//        
+//        try {
+//	        AccountManagerFuture<Bundle> accountManagerFuture = mgr.getAuthToken(acct, "cl", null, this, null, null);
+//	        Bundle authTokenBundle = accountManagerFuture.getResult();
+//	        String authToken = authTokenBundle.get(AccountManager.KEY_AUTHTOKEN).toString();
+//	        
+//	        mgr.invalidateAuthToken("com.google", authToken);
+//	        
+//	        accountManagerFuture = mgr.getAuthToken(acct, "cl", null, this, null, null);
+//	        authTokenBundle = accountManagerFuture.getResult();
+//	        authToken = authTokenBundle.get(AccountManager.KEY_AUTHTOKEN).toString();
+//        } catch (AuthenticatorException e) {
+//        } catch (IOException e) {
+//        } catch (OperationCanceledException e) {
+//        }
+//        CalendarService myService = new CalendarService("UserCalendar");
+//        myService.setAuthSubToken(authtoken);
 	}
 	
 	@Override

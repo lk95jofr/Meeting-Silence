@@ -7,19 +7,25 @@
             android:summary="Specify time and day to schedule"
             android:key="allDayPref" />
 		<EditTextPreference
+            android:layout_weight="1"
             android:title="Start"
+            android:dialogTitle=""
         	android:name="start"
             android:summary="Set start time for scheduling"
             android:dependency="allDayPref"
             android:key="startPref"
-            android:defaultValue="8:00" />
+            android:inputType="phone"
+            android:defaultValue="8.00" />
 		<EditTextPreference
+            android:layout_weight="1"
             android:title="End"
+            android:dialogTitle=""
         	android:name="end"
             android:summary="Set end time for scheduling"
             android:dependency="allDayPref"
             android:key="endPref"
-            android:defaultValue="18:00" />
+            android:inputType="phone"
+            android:defaultValue="18.00" />
         <noip.toonsnet.app.preference.ListPreferenceMultiSelect
         	android:defaultValue="#ALL#"
             android:dependency="allDayPref"
@@ -48,11 +54,14 @@
             android:summary="Match on keywords"
             android:key="keywordPref" />
 		<EditTextPreference
+            android:layout_weight="1"
             android:title="Keywords"
+            android:dialogTitle=""
         	android:name="keywords"
             android:summary="Leave empty for all or separate with ;"
             android:dependency="keywordPref"
             android:key="rulePref"
+            android:inputType="textShortMessage"
             android:defaultValue="" />
 		<CheckBoxPreference
         	android:title="Event locations"
@@ -60,11 +69,14 @@
             android:summary="Match on event locations"
             android:key="locationPref" />
 		<EditTextPreference
+            android:layout_weight="1"
             android:title="Event locations"
+            android:dialogTitle=""
         	android:name="locations"
             android:summary="Leave empty for all or separate with ;"
             android:dependency="locationPref"
             android:key="eventLocationPref"
+            android:inputType="textShortMessage"
             android:defaultValue="" />
         <!-- Preference
             android:title="Edit rules"

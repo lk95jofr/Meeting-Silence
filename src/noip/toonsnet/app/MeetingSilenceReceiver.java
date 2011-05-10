@@ -47,20 +47,21 @@ public class MeetingSilenceReceiver extends BroadcastReceiver {
     	boolean hasTimeAndDay = !meetingSilence.getSharedPreference("allDayPref", false);
     	
     	if (!hasTimeAndDay) {
-	    	String startPref = meetingSilence.getSharedPreference("startPref", "8:00");
-	    	startPref = startPref.replace(".", ":");
-	    	String endPref = meetingSilence.getSharedPreference("endPref", "18:00");
-	    	endPref = endPref.replace(".", ":");
+	    	String startPref = meetingSilence.getSharedPreference("startPref", "8.00");
+	    	startPref = startPref.replace(":", ".");
+	    	String endPref = meetingSilence.getSharedPreference("endPref", "18.00");
+	    	endPref = endPref.replace(":", ".");
 	    	
-	    	String[] startTime = startPref.split(":");
-	    	String[] endTime = endPref.split(":");
+	    	String[] startTime = startPref.split(".");
+	    	String[] endTime = endPref.split(".");
 	    	
 	    	Calendar cStartTime = Calendar.getInstance();
 	    	try {
 	    		cStartTime.set(Calendar.HOUR_OF_DAY, Integer.parseInt(startTime[0]));
 	    		cStartTime.set(Calendar.MINUTE, Integer.parseInt(startTime[1]));
+	    	} catch (ArrayIndexOutOfBoundsException e) {
+	    		hasTimeAndDay = true;
 	    	} catch (NumberFormatException e) {
-	    		// If this fails we iterate
 	    		hasTimeAndDay = true;
 	    	}
 	    	
@@ -68,6 +69,9 @@ public class MeetingSilenceReceiver extends BroadcastReceiver {
 	    	try {
 	    		cEndTime.set(Calendar.HOUR_OF_DAY, Integer.parseInt(endTime[0]));
 	    		cEndTime.set(Calendar.MINUTE, Integer.parseInt(endTime[1]));
+	    	} catch (ArrayIndexOutOfBoundsException e) {
+	    		// If this fails we iterate
+	    		hasTimeAndDay = true;
 	    	} catch (NumberFormatException e) {
 	    		// If this fails we iterate
 	    		hasTimeAndDay = true;
@@ -105,19 +109,6 @@ public class MeetingSilenceReceiver extends BroadcastReceiver {
 		Log.d(TAG, "Possible schedule: " + meetingSilence.calendarToString(nextSchedule));
 		
 		if (hasTimeAndDay) {
-//			Uri calendarUri = Uri.parse("content://com.android.calendar/calendars");
-//			Uri eventUri = Uri.parse("content://com.android.calendar/instances/when");
-			
-//	    	if (android.os.Build.VERSION.SDK_INT <= 7 ) {
-//	    		calendarUri = Uri.parse("content://calendar/calendars");
-//	    		eventUri    = Uri.parse("content://calendar/events"); // ??????
-//	    	}
-	    	
-//	    	Log.d(TAG, "calendarUri: " + calendarUri.toString());
-//	    	Log.d(TAG, "eventUri: " + eventUri.toString());
-		     
-//	    	String[] projectionCalendar = new String[] { "_id", "name" };
-//	    	Cursor calendarCursor = context.getContentResolver().query(calendarUri, projectionCalendar, "selected=1", null, null);
 	    	Cursor calendarCursor = meetingSilence.getCalendarCursor();
 	    	if (calendarCursor.moveToFirst()) {
 	    		String calName = "";
@@ -132,15 +123,8 @@ public class MeetingSilenceReceiver extends BroadcastReceiver {
 	    		    }
 	    		    
 	    		    calId = calendarCursor.getString(idColumn);
-	    			
 //	    		    Log.d(TAG, "Name: " + calName + ", ID: " + calId);
-//	    		    Uri.Builder builder = eventUri.buildUpon();
-//	    		    long now = new Date().getTime();
-//	    		    ContentUris.appendId(builder, now); // From
-//	    		    ContentUris.appendId(builder, now + (DateUtils.MINUTE_IN_MILLIS * 10)); // To
-	
-//	    	    	String[] projectionEvents = new String[] {"event_id", "title", "begin", "end", "allDay","description","eventLocation"};
-//	    	        Cursor eventCursor = context.getContentResolver().query(builder.build(), projectionEvents, "Calendars._id=" + calId, null, "startDay ASC, startMinute ASC");    		    
+	    		    
 	    	        Cursor eventCursor = meetingSilence.getEventCursor(calId);
 	    	        if (eventCursor.moveToFirst()) {
 	    	        	do {
