@@ -9,22 +9,22 @@
 		<EditTextPreference
             android:layout_weight="1"
             android:title="Start"
-            android:dialogTitle=""
+            android:dialogTitle="Start"
         	android:name="start"
             android:summary="Set start time for scheduling"
             android:dependency="allDayPref"
             android:key="startPref"
-            android:inputType="phone"
+            android:inputType="textShortMessage"
             android:defaultValue="8.00" />
 		<EditTextPreference
             android:layout_weight="1"
             android:title="End"
-            android:dialogTitle=""
+            android:dialogTitle="End"
         	android:name="end"
             android:summary="Set end time for scheduling"
             android:dependency="allDayPref"
             android:key="endPref"
-            android:inputType="phone"
+            android:inputType="textShortMessage"
             android:defaultValue="18.00" />
         <noip.toonsnet.app.preference.ListPreferenceMultiSelect
         	android:defaultValue="#ALL#"
@@ -56,7 +56,7 @@
 		<EditTextPreference
             android:layout_weight="1"
             android:title="Keywords"
-            android:dialogTitle=""
+            android:dialogTitle="Keywords"
         	android:name="keywords"
             android:summary="Leave empty for all or separate with ;"
             android:dependency="keywordPref"
@@ -71,7 +71,7 @@
 		<EditTextPreference
             android:layout_weight="1"
             android:title="Event locations"
-            android:dialogTitle=""
+            android:dialogTitle="Event locations"
         	android:name="locations"
             android:summary="Leave empty for all or separate with ;"
             android:dependency="locationPref"

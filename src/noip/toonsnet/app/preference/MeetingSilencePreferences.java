@@ -20,8 +20,8 @@ public class MeetingSilencePreferences extends PreferenceActivity implements OnS
     
     private MeetingSilence meetingSilence;
     
-    private EditTextPreference mStartPref;
-    private EditTextPreference mEndPref;
+//    private EditTextPreference mStartPref;
+//    private EditTextPreference mEndPref;
     
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -41,7 +41,7 @@ public class MeetingSilencePreferences extends PreferenceActivity implements OnS
 		
 		addPreferencesFromResource(R.xml.preferences);
 		
-		mStartPref = (EditTextPreference)getPreferenceScreen().findPreference("startPref");
+//		mStartPref = (EditTextPreference)getPreferenceScreen().findPreference("startPref");
 //		mEndPref = (EditTextPreference)getPreferenceScreen().findPreference("endPref");
 		
 //		String calendarList = meetingSilence.getSharedPreference("calendarList", "");
